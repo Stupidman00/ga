@@ -14,6 +14,7 @@ abstract class GA<T> {
 
     fun doit(): T? {
         this.initialPopulation()
+        if (resultGA != null) return resultGA
         for (i in 0..generations) {
             this.reproduction()
             if (resultGA != null) return resultGA
