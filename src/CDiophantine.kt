@@ -1,5 +1,4 @@
 import java.util.*
-import kotlin.Comparator
 
 class CDiophantine(val factors: IntArray,
                    val result: Int,
@@ -7,11 +6,7 @@ class CDiophantine(val factors: IntArray,
                    override val generations: Int) : GA<CDiophantine.Specimen>() {
     override var resultGA: Specimen? = null
 
-    data class Specimen(var multipliers: IntArray, var fitness: Int = -1) {
-        constructor() : this(intArrayOf())
-    }
-
-    var population: Array<Specimen> = emptyArray()
+    data class Specimen (var multipliers: IntArray, var fitness: Int = -1)
 
     override fun initialPopulation() {
         if (factors.isEmpty()) throw IllegalArgumentException("No factors.")
@@ -68,38 +63,5 @@ class CDiophantine(val factors: IntArray,
                 specimen
             }
         }
-    }
-
-    override fun reproduction() {
-        population.forEach { sp ->
-            if (sp.fitness == 0) {
-                resultGA = sp
-                return
-            }
-        }
-
-        val rand = Random()
-        val mutationNumber = rand.nextInt((20 * populationSize * factors.size) / 100)
-        for (i in 0..mutationNumber - 1) {
-            val index = rand.nextInt(population.size)
-            mutation(population[index])
-        }
-
-        val size = population.size
-        for (p1 in 0..size - 1) {
-            var p2 = rand.nextInt(population.size)
-            while (p2 == p1) p2 = rand.nextInt(population.size)
-            population += crossover(population[p1], population[p2])
-        }
-    }
-
-    override fun selection() {
-        population.sortWith(object : Comparator<Specimen> {
-            override fun compare(o1: Specimen?, o2: Specimen?): Int {
-                if (o1 == null || o2 == null) throw NullPointerException()
-                return compareValues(o1.fitness, o2.fitness)
-            }
-        })
-        population = population.copyOfRange(0, populationSize)
     }
 }
