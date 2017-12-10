@@ -12,10 +12,10 @@ abstract class GA<T> {
     protected abstract fun reproduction()
     protected abstract fun selection()
 
-    fun doit(): T? {
+    fun doIt(): T? {
         this.initialPopulation()
         if (resultGA != null) return resultGA
-        for (i in 0..generations) {
+        for (i in 0..generations - 1) {
             this.reproduction()
             if (resultGA != null) return resultGA
             this.selection()
