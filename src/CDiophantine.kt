@@ -3,65 +3,61 @@ import java.util.*
 class CDiophantine(val factors: IntArray,
                    val result: Int,
                    override val populationSize: Int,
-                   override val generations: Int) : GA<CDiophantine.Specimen>() {
-    override var resultGA: Specimen? = null
+                   override val generations: Int) : GA<CDiophantine.Solution>() {
+    override var resultGA: Solution? = null
+    private val rand = Random()
 
-    data class Specimen (var multipliers: IntArray, var fitness: Int = -1)
+    inner class Solution : GASolution {
+        var multipliers: IntArray
+
+        override var fitness: Int = -1
+
+        constructor(multipliers: IntArray) {
+            this.multipliers = multipliers
+            fitness()
+        }
+
+        override fun fitness() {
+            fitness = Math.abs(multipliers.foldIndexed(0)
+            { index, result, m -> result + factors[index] * m} - result)
+        }
+
+        override fun mutation(): GASolution {
+            val index = rand.nextInt(multipliers.size)
+            val newMultipliers = multipliers.copyOf()
+            newMultipliers[index] = 1 + rand.nextInt(result - 1)
+            return Solution(newMultipliers)
+        }
+
+        override fun crossover(other: GASolution): GASolution {
+            val index = rand.nextInt(factors.size - 1)
+            val newOther = other as Solution
+            val newMultipliers: IntArray
+            newMultipliers = if (rand.nextBoolean()) this.multipliers.copyOfRange(0, index) +
+                    newOther.multipliers.copyOfRange(index, factors.size)
+            else this.multipliers.copyOfRange(0, index) +
+                    newOther.multipliers.copyOfRange(index, factors.size)
+            return Solution(newMultipliers)
+        }
+
+    }
 
     override fun initialPopulation() {
-        if (factors.isEmpty()) throw IllegalArgumentException("No factors.")
+        check(factors.isNotEmpty()) { "No factors." }
+        check(populationSize > 0) {"Population size can't be negative or zero."}
+        check(generations > 0) {"Generations count can't be negative or zero."}
         if (factors.size == 1) {
-            if (result % factors[0] != 0) throw IllegalArgumentException("No integer solution.")
-            else {
-                resultGA = Specimen(intArrayOf(result / factors[0]),0)
-                return
-            }
+            check(result % factors[0] != 0) {"No integer solution."}
+            resultGA = Solution(intArrayOf(result / factors[0]))
+            return
         }
-        val rand = Random()
+
         for (i in 0..populationSize - 1) {
             var temp: IntArray = intArrayOf()
             for (k in 0..factors.size - 1) {
                 temp += 1 + rand.nextInt(result)
             }
-            val specimen = Specimen(temp)
-            specimen.fitness = fitness(specimen)
-            population += specimen
-        }
-    }
-
-    override fun fitness(specimen: Specimen): Int {
-        var sum = 0
-        for (i in 0..factors.size - 1) {
-            sum += factors[i] * specimen.multipliers[i]
-        }
-        return Math.abs(sum - result)
-    }
-
-    override fun mutation(specimen: Specimen) {
-        val rand = Random()
-        val index = rand.nextInt(factors.size)
-        specimen.multipliers[index] = 1 + rand.nextInt(result)
-        specimen.fitness = fitness(specimen)
-    }
-
-    override fun crossover(specimen1: Specimen, specimen2: Specimen): Specimen {
-        val rand = Random()
-        val index = rand.nextInt(factors.size)
-        val newMultipliers1 = specimen1.multipliers.copyOfRange(0, index) +
-                specimen2.multipliers.copyOfRange(index, factors.size)
-        val newMultipliers2 = specimen2.multipliers.copyOfRange(0, index) +
-                specimen1.multipliers.copyOfRange(index, factors.size)
-        return when (rand.nextInt() % 2) {
-            0 -> {
-                val specimen = Specimen(newMultipliers1)
-                specimen.fitness = fitness(specimen)
-                specimen
-            }
-            else -> {
-                val specimen = Specimen(newMultipliers2)
-                specimen.fitness = fitness(specimen)
-                specimen
-            }
+            population.add(Solution(temp))
         }
     }
 }
